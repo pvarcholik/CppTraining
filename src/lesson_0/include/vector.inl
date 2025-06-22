@@ -24,7 +24,7 @@ Vector<T>::Vector(const Vector& other)
   {
     for (size_type i = 0_z; i < other.size_; ++i)
     {
-      new (data_ + i)value_type(other.data_[i]);
+      new (data_ + i) value_type(other.data_[i]);
     }
 
     size_ = other.size_;
@@ -63,7 +63,7 @@ Vector<T>& Vector<T>::operator=(const Vector& other)
   //   }
   // }
 
-  // return *this;  
+  // return *this;
 }
 
 template <typename T>
@@ -87,14 +87,36 @@ Vector<T>& Vector<T>::operator=(Vector&& other) noexcept
 }
 
 template <typename T>
-Vector<T>::~Vector()
+Vector<T>::~Vector() noexcept
 {
   for (size_type i = 0_z; i < size_; ++i)
   {
     data_[i].~value_type();
   }
 
-  free(data_);
+  ::operator delete(data_);
+}
+
+template <typename T>
+typename Vector<T>::reference Vector<T>::operator[](size_type index)
+{
+  if (index >= size_)
+  {
+    throw std::out_of_range("Index out of range.");
+  }
+
+  return data_[index];
+}
+
+template <typename T>
+typename Vector<T>::const_reference Vector<T>::operator[](size_type index) const
+{
+  if (index >= size_)
+  {
+    throw std::out_of_range("Index out of range.");
+  }
+
+  return data_[index];
 }
 
 template <typename T>
@@ -116,49 +138,110 @@ bool Vector<T>::empty() const noexcept
 }
 
 template <typename T>
-void Vector<T>::reserve(size_type capacity)
+typename Vector<T>::reference Vector<T>::front()
 {
-  if (capacity > capacity_)
+  return operator[](0_z);
+}
+
+template <typename T>
+typename Vector<T>::const_reference Vector<T>::front() const
+{
+  return operator[](0_z);
+}
+
+template <typename T>
+typename Vector<T>::reference Vector<T>::back()
+{
+  return operator[](size_ - 1_z);
+}
+
+template <typename T>
+typename Vector<T>::const_reference Vector<T>::back() const
+{
+  return operator[](size_ - 1_z);
+}
+
+template <typename T>
+typename Vector<T>::reference Vector<T>::at(size_type index)
+{
+  return operator[](index);
+}
+
+template <typename T>
+typename Vector<T>::const_reference Vector<T>::at(size_type index) const
+{
+  return operator[](index);
+}
+
+template <typename T>
+void Vector<T>::reserve(size_type new_capacity)
+{
+  if (new_capacity > capacity_)
   {
-    auto data{reinterpret_cast<value_type*>(realloc(data_, capacity * sizeof(value_type)))};
-    assert(data != nullptr && "Memory allocation failed");
-    data_ = data;
-    capacity_ = capacity;
+    // Think of ::operator new as C++'s version of malloc.
+    // It allocates memory, but does not call constructors
+    // so we need to call constructors manually.
+    // We _could_ try to use realloc here, but it is not guaranteed
+    // to work correctly with non-POD types.
+    // Specifying the global new operator (::operator new) bypasses
+    // any custom new operator overloads that might be defined
+    auto new_data{reinterpret_cast<value_type*>(::operator new(new_capacity * sizeof(value_type)))};
+
+    for (size_type i = 0_z; i < size_; ++i)
+    {
+      new (new_data + i) value_type(std::move(data_[i]));
+      data_[i].~value_type();
+    }
+
+    // ::operator delete is the C++ version of free.
+    // It deallocates memory, but does not call destructors.
+    ::operator delete(data_);
+    data_ = new_data;
+    capacity_ = new_capacity;
   }
 }
 
 template <typename T>
-void Vector<T>::resize(size_type size)
+void Vector<T>::resize(size_type new_size)
 {
-  if (size < size_)
-		{
-			for (size_type i = size; i < size_; ++i)
-			{
-				data_[i].~value_type();
-			}
-
-			if (size == 0_z)
-			{
-				free(data_);
-				data_ = nullptr;
-			}
-			else
-			{
-				auto data{reinterpret_cast<value_type*>(realloc(data_, size * sizeof(value_type)))};
-				 assert(data != nullptr && "Memory allocation failed");
-        data_ = data;
-				capacity_ = size_ = size;
-			}
-		}
-  else
+  if (new_size < size_)
   {
-    reserve(size);
-    for (size_type i = size_; i < size; ++i)
+    for (size_type i = new_size; i < size_; ++i)
     {
-      new (data_ + i)value_type{};
+      data_[i].~value_type();
+    }
+    
+    if (new_size == 0_z)
+    {
+      ::operator delete(data_);
+      data_ = nullptr;
+      capacity_ = size_ = 0_z;
+    }
+    else
+    {
+      auto new_data{reinterpret_cast<value_type*>(::operator new(new_size * sizeof(value_type)))};
+
+      for (size_type i = 0_z; i < size_; ++i)
+      {
+        new (new_data + i) value_type(std::move(data_[i]));
+        data_[i].~value_type();
+      }
+
+      ::operator delete(data_);
+      data_ = new_data;
+			capacity_ = size_ = new_size;
+		}
+  }
+  else if (new_size > size_)
+  {
+    reserve(new_size);
+
+    for (size_type i = size_; i < new_size; ++i)
+    {
+      new (data_ + i) value_type{};
     }
 
-    size_ = size;
+    size_ = new_size;
   }
 
   assert(capacity_ == size_);
@@ -180,16 +263,54 @@ void Vector<T>::shrink_to_fit()
 {
   if (size_ == 0)
   {
-    free(data_);
+    ::operator delete(data_);
     data_ = nullptr;
     capacity_ = 0;
   }
   else if (size_ != capacity_)
   {
-    auto data{reinterpret_cast<value_type*>(realloc(data_, size_ * sizeof(value_type)))};
-    assert(data != nullptr && "Memory allocation failed");
-    data_ = data;
+    auto new_data{reinterpret_cast<value_type*>(::operator new(size_ * sizeof(value_type)))};
+
+    for (size_type i = 0_z; i < size_; ++i)
+    {
+      new (new_data + i) value_type(std::move(data_[i]));
+      data_[i].~value_type();
+    }
+
+    ::operator delete(data_);
+    data_ = new_data;
     capacity_ = size_;
+  }
+}
+
+template <typename T>
+void Vector<T>::push_back(const_reference value)
+{
+  if (size_ == capacity_)
+  {
+    reserve(capacity_ == 0_z ? 1_z : capacity_ * 2_z);
+  }
+
+  new (data_ + size_++) value_type(value);
+}
+
+template <typename T>
+void Vector<T>::push_back(rvalue_reference value)
+{
+  if (size_ == capacity_)
+  {
+    reserve(capacity_ == 0_z ? 1_z : capacity_ * 2_z);
+  }
+
+  new (data_ + size_++) value_type(std::move(value));
+}
+
+template <typename T>
+void Vector<T>::pop_back()
+{
+  if (size_ > 0)
+  {
+    data_[--size_].~value_type();
   }
 }
 

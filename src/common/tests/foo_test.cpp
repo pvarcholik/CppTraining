@@ -38,5 +38,49 @@ SCENARIO("Exercising Foo", "[Foo]")
         REQUIRE(b.getData() == 42);
       }
     }
+
+    WHEN("Another Foo is copy-assigned from a")
+    {
+      Foo b;
+      b = a;
+
+      THEN("They are equal")
+      {
+        REQUIRE(a == b);
+      }
+
+      THEN("Modifying b leaves a unchanged")
+      {
+        b.setData(100);
+        REQUIRE(a.getData() == 42);
+        REQUIRE(b.getData() == 100);
+        REQUIRE(a != b);
+      }
+    }
+
+    WHEN("Another Foo is move-assigned from a")
+    {
+      Foo b{100};
+      b = std::move(a);
+
+      THEN("b retains the a's value")
+      {
+        REQUIRE(b.getData() == 42);
+      }
+    }
+
+    WHEN("Converting a to a string")
+    {
+      THEN("The string representation is correct")
+      {
+        REQUIRE(to_string(a) == "42");
+      }
+    }
   }
+}
+
+TEST_CASE("Explicit destruction of Foo")
+{
+    Foo* f = new Foo{42};
+    delete f;
 }

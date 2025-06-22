@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cstdint>
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
+#include <stdexcept>
 
 #include "literal_operators.h"
 
@@ -23,17 +24,31 @@ namespace CppTraining
     Vector(Vector&& other) noexcept;
     Vector& operator=(const Vector& other);
     Vector& operator=(Vector&& other) noexcept;
-    ~Vector();
+    ~Vector() noexcept;
 
+    reference operator[](size_type index);
+    const_reference operator[](size_type index) const;
+    
     size_type size() const noexcept;
     size_type capacity() const noexcept;
     bool empty() const noexcept;
+
+    reference front();
+    const_reference front() const;
+    reference back();
+    const_reference back() const;
+    reference at(size_type index);
+    const_reference at(size_type index) const;
 
     void reserve(size_type capacity);
     void resize(size_type size);
     void clear();
     void shrink_to_fit();
 
+    void push_back(const_reference value);
+    void push_back(rvalue_reference value);
+    void pop_back();
+  
   private:
     size_type size_{0_z};
     size_type capacity_{0_z};

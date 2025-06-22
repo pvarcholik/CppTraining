@@ -29,21 +29,34 @@
     {
       "label": "Generate All Lessons (DEBUG)",
       "type": "shell",
-      "command": "cmake",
-      "args": [
-        "..",
-        "-DCMAKE_BUILD_TYPE=Debug",
-      ],
+      "command": "./scripts/configure.sh",
       "options": {
-        "cwd": "${workspaceFolder}/build"
+        "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": [
-        "$gcc"
-      ],
+      "problemMatcher": [],
       "group": {
         "kind": "build",
         "isDefault": false
       }
+    },
+    {
+      "label": "Run All Tests (DEBUG)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/run_tests.sh",
+      "args": [
+        "--config",
+        "Debug"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "dependsOn": "Build All Lessons (DEBUG)"
     },
     {
       "label": "Run code coverage for selected test target",
