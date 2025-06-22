@@ -1,4 +1,5 @@
 #include <catch2/catch_all.hpp>
+
 #include "foo.h"
 
 using namespace CppTraining;
@@ -81,6 +82,6 @@ SCENARIO("Exercising Foo", "[Foo]")
 
 TEST_CASE("Explicit destruction of Foo")
 {
-    Foo* f = new Foo{42};
-    delete f;
+  Foo* f = new Foo{42};
+  delete f;
 }

@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+  set(CMAKE_TOOLCHAIN_FILE
+      "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "")
 endif()
 
-project (CppTraining)
+project(CppTraining)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,7 +17,7 @@ if(MSVC)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-ignored-qualifiers)
 
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(--coverage -O0 -g)
     add_link_options(--coverage)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")

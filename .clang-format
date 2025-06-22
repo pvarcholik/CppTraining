@@ -1,0 +1,76 @@
+BasedOnStyle: LLVM
+AccessModifierOffset: '-2'
+AlignEscapedNewlines: Right
+AlignConsecutiveAssignments: false
+AlignOperands: true
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: true
+BinPackParameters: false
+BinPackArguments: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: 100
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+IndentCaseLabels: false
+IndentWidth: 2
+ContinuationIndentWidth: 2
+NamespaceIndentation: None
+PointerAlignment: Left
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInContainerLiterals: false
+TabWidth: 2
+UseTab: Never
+CompactNamespaces: false
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+SortIncludes: true
+---
+Language: Cpp
+Cpp11BracedListStyle: true
+Standard: c++14
+IncludeCategories:
+  - Regex: '^"(llvm|llvm-c|clang|clang-c)/'
+    Priority: 1
+  # Headers in <> without extension.
+  - Regex: '<([A-Za-z0-9\Q/-_\E])+>'
+    Priority: 2
+  # Headers in <> from specific external libraries.
+  - Regex: '<(catch2)\/'
+    Priority: 3
+  # Headers in <> with extension.
+  - Regex: '<([A-Za-z0-9.\Q/-_\E])+>'
+    Priority: 4
+  # Headers in "" with extension.
+  - Regex: '"([A-Za-z0-9.\Q/-_\E])+"'
+    Priority: 5
+  - Regex: '.*'
+    Priority: 6

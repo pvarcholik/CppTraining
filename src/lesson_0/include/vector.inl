@@ -17,8 +17,7 @@ Vector<T>::Vector(size_type capacity)
 }
 
 template <typename T>
-Vector<T>::Vector(const Vector& other)
-  : Vector{other.capacity_}
+Vector<T>::Vector(const Vector& other) : Vector{other.capacity_}
 {
   if (capacity_ > 0_z)
   {
@@ -33,9 +32,7 @@ Vector<T>::Vector(const Vector& other)
 
 template <typename T>
 Vector<T>::Vector(Vector&& other) noexcept
-  : size_{other.size_}
-  , capacity_{other.capacity_}
-  , data_{other.data_}
+    : size_{other.size_}, capacity_{other.capacity_}, data_{other.data_}
 {
   other.size_ = 0_z;
   other.capacity_ = 0_z;
@@ -45,8 +42,8 @@ Vector<T>::Vector(Vector&& other) noexcept
 template <typename T>
 Vector<T>& Vector<T>::operator=(const Vector& other)
 {
-  auto copy{ other };
-	swap(*this, copy);
+  auto copy{other};
+  swap(*this, copy);
 
   return *this;
 
@@ -210,7 +207,7 @@ void Vector<T>::resize(size_type new_size)
     {
       data_[i].~value_type();
     }
-    
+
     if (new_size == 0_z)
     {
       ::operator delete(data_);
@@ -229,8 +226,8 @@ void Vector<T>::resize(size_type new_size)
 
       ::operator delete(data_);
       data_ = new_data;
-			capacity_ = size_ = new_size;
-		}
+      capacity_ = size_ = new_size;
+    }
   }
   else if (new_size > size_)
   {

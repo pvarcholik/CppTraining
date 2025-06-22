@@ -1,6 +1,7 @@
 #include <catch2/catch_all.hpp>
-#include "vector.h"
+
 #include "foo.h"
+#include "vector.h"
 
 using namespace CppTraining;
 
