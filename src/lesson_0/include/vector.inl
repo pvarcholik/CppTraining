@@ -218,7 +218,7 @@ void Vector<T>::resize(size_type new_size)
     {
       auto new_data{reinterpret_cast<value_type*>(::operator new(new_size * sizeof(value_type)))};
 
-      for (size_type i = 0_z; i < size_; ++i)
+      for (size_type i = 0_z; i < new_size; ++i)
       {
         new (new_data + i) value_type(std::move(data_[i]));
         data_[i].~value_type();

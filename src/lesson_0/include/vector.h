@@ -10,6 +10,12 @@
 namespace CppTraining
 {
 template <typename T>
+class Vector;
+
+template <typename T>
+void swap(Vector<T>& lhs, Vector<T>& rhs) noexcept;
+
+template <typename T>
 class Vector final
 {
 public:
@@ -25,6 +31,8 @@ public:
   Vector& operator=(const Vector& other);
   Vector& operator=(Vector&& other) noexcept;
   ~Vector() noexcept;
+
+  friend void swap<>(Vector& lhs, Vector& rhs) noexcept;
 
   reference operator[](size_type index);
   const_reference operator[](size_type index) const;
@@ -55,8 +63,6 @@ private:
   value_type* data_{nullptr};
 };
 
-template <typename T>
-void swap(Vector<T>& lhs, Vector<T>& rhs) noexcept;
 } // namespace CppTraining
 
 #include "vector.inl"
