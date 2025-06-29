@@ -1,7 +1,7 @@
 
 # C++ Training
 
-The purpose of this training is to offer engineers a hands-on, progressive learning experience that covers both foundational and modern C++ practices through practical exercises.
+The purpose of this training is to offer engineers a hands-on, progressive learning experience that builds both foundational and modern C++ proficiency through guided implementation challenges.
 
 ---
 

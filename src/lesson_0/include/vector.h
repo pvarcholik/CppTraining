@@ -64,7 +64,6 @@ private:
   size_type capacity_{0_z};
   value_type* data_{nullptr};
 };
-
 } // namespace CppTraining
 
 #include "vector.inl"
