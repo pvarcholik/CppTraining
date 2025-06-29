@@ -12,6 +12,9 @@ case "$target" in
   cpp_training_lesson_0_tests)
     test_subdir="src/lesson_0/tests"
     ;;
+  cpp_training_lesson_1_tests)
+    test_subdir="src/lesson_1/tests"
+    ;;
   *)
     echo "❌ Unknown test target: $target"
     exit 1

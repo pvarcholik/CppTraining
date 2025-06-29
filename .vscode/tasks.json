@@ -84,7 +84,8 @@
       "description": "Choose the test to run",
       "options": [
         "cpp_training_common_tests",
-        "cpp_training_lesson_0_tests"
+        "cpp_training_lesson_0_tests",
+        "cpp_training_lesson_1_tests"
       ],
       "default": "cpp_training_common_tests"
     }
