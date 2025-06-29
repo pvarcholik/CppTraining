@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <initializer_list>
 #include <stdexcept>
 
 #include "literal_operators.h"
@@ -26,6 +27,7 @@ public:
   using rvalue_reference = value_type&&;
 
   explicit Vector(size_type capacity = 0_z);
+  Vector(std::initializer_list<value_type> values);
   Vector(const Vector& other);
   Vector(Vector&& other) noexcept;
   Vector& operator=(const Vector& other);

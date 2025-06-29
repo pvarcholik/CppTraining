@@ -17,6 +17,15 @@ Vector<T>::Vector(size_type capacity)
 }
 
 template <typename T>
+Vector<T>::Vector(std::initializer_list<value_type> values) : Vector{values.size()}
+{
+  for (const auto& value : values)
+  {
+    push_back(value);
+  }
+}
+
+template <typename T>
 Vector<T>::Vector(const Vector& other) : Vector{other.capacity_}
 {
   if (capacity_ > 0_z)

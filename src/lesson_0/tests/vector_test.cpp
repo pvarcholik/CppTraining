@@ -456,5 +456,18 @@ SCENARIO("Exercising vector", "[vector]")
         REQUIRE_THROWS_AS(const_ref.at(100_z), std::out_of_range);
       }
     }
+
+    WHEN("We construct the vector from an initializer list")
+    {
+      Vector<Foo> values{a, b, c};
+
+      THEN("The size is correct and all elements are in order")
+      {
+        REQUIRE(values.size() == 3_z);
+        REQUIRE(values.at(0) == a);
+        REQUIRE(values.at(1) == b);
+        REQUIRE(values.at(2) == c);
+      }
+    }
   }
 }
