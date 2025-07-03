@@ -12,7 +12,6 @@ This curriculum is designed to:
 - Strengthen understanding of C++ core language features, object lifetime, and templates
 - Provide deep insight into memory management, RAII, and resource ownership
 - Explore STL-like design by building reusable types from scratch
-- Transition learners from C++14 to C++17 incrementally
 - Reinforce the material found in the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
 - Introduce useful tools for analyzing, testing, and improving your code
 
@@ -27,7 +26,6 @@ This training is for engineers who:
 - Already have a firm grasp of C++ syntax
 - Have solid experience with C#, python, or another object-oriented language
 - Want to go deeper into advanced C++ syntax and idioms
-
 
 ---
 
@@ -59,7 +57,6 @@ Each lesson consists of:
 - Introduces `emplace_back()` and perfect forwarding
 - Compares value semantics to in-place construction
 - Enables use of algorithms like `std::equal`
-- Begins introducing C++17 capabilities (e.g. attributes, structured bindings)
 
 ---
 
@@ -128,4 +125,4 @@ Ways to contribute:
 - Suggest enhancements to setup, code, or tests
 - Propose new topics or improvements for upcoming lessons
 
-Your feedback helps evolve this into a durable and flexible training path for modern C++ that grows with the team.
+Your feedback helps evolve this into a durable and flexible training path for modern C++.
