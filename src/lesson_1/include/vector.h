@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <stdexcept>
+#include <type_traits>
 
 #include "literal_operators.h"
 
@@ -25,6 +26,9 @@ public:
   using reference = value_type&;
   using const_reference = const value_type&;
   using rvalue_reference = value_type&&;
+
+  static_assert(std::is_copy_constructible<T>::value,
+                "Vector<T> requires copy-constructible value type");
 
   explicit Vector(size_type capacity = 0_z);
   Vector(std::initializer_list<value_type> values);

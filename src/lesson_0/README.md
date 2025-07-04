@@ -6,18 +6,20 @@ In this lesson, you will build your own implementation of a generic `Vector<T>` 
 
 ---
 
-## 🎯 Learning Objectives
+### 🎯 Learning Objectives
 
 By the end of this lesson, you will be able to:
 
-- Understand how memory is allocated and tracked in dynamic containers
-- Manually construct and destroy objects using `placement new` and `~T()`
-- Implement constructors, destructors, and assignment operators (Rule of 5)
-- Safely grow and shrink containers with `reserve`, `resize`, `shrink_to_fit`
-- Write and run BDD-style unit tests using Catch2
-- Generate line and function coverage reports with `lcov`
+- Implement a minimal `Vector<T>`-like container with support for dynamic resizing and deep-copy semantics
+- Apply the **Rule of Five** to user-defined types (copy/move constructors, assignment, destructor)
+- Allocate and manage raw memory safely using `::operator new` / `operator delete`
+- Construct and destroy objects manually using **placement new** and explicit destructor calls
+- Identify and use **type aliases** and **type traits** to enable generic programming and trait-based enforcement
+- Use the **copy-swap idiom** to implement exception-safe assignment operators
+- Demonstrate understanding of **virtual destructors**, vtables, and dynamic object destruction semantics
+- Write and run unit tests using Catch2, and generate basic coverage reports via `lcov`
 
-> You will also learn where (and why) `realloc()` doesn't work in modern C++, and how to manage raw memory safely using `::operator new` and `::operator delete`.
+> 💬 This lesson lays the foundation for deep, idiomatic C++ by introducing the mechanics behind container interfaces, type safety, and memory control.
 
 ---
 
@@ -34,12 +36,12 @@ lesson_0/
 
 ## 🔧 Key Features of `Vector<T>`
 
-- Templates, standards-compliant type aliases and `type_traits`
+- Templates and standards-compliant type aliases
 - Capacity-managed storage (uninitialized memory)
 - Explicit object construction using `placement new`
 - Manual object destruction using `~T()`
 - Element operations: `push_back`, `pop_back`, `resize`, `clear`, `shrink_to_fit`
-- Bounds-checked access via `at()`
+- Bounds-checked access via `at()` (but maybe also `operator[]`)
 - Rule-of-5 support:
   - Copy constructor
   - Move constructor
@@ -50,7 +52,7 @@ lesson_0/
 
 ## 💡 A Few Notable Concepts in This Lesson
 
-### 📌 Notes on Type Aliases
+### 📌 Type Aliases
 
 The `Vector<T>` implementation includes a set of common type aliases:
 
@@ -62,8 +64,6 @@ using const_reference = const value_type&;
 using rvalue_reference = value_type&&;
 ```
 
-#### Purpose
-
 These aliases replicate conventions used by standard library containers like `std::vector`, and are crucial for:
 
 - **Generic programming**
@@ -72,9 +72,66 @@ These aliases replicate conventions used by standard library containers like `st
 - **STL compatibility**
   Many STL components (like iterators, traits, and algorithms) assume or require these alias names to be present in order to interact seamlessly with custom types.
 
-### 📌 Notes on Type Traits
+### 💡 Sidebar: lvalues, rvalues, and rvalue references
 
-While those type aliases facilitate generic code, they are **not part of the type traits system**. The aliases are:
+In C++, a key innovation of modern (C++11+) language design is the support for **move semantics**, and it hinges entirely on how the language distinguishes *lvalues and rvalues*.
+
+#### 📎 Basic definitions
+
+| Expression          | Treated as... | Meaning                                               |
+|---------------------|----------------|--------------------------------------------------------|
+| `T x = 42;`         | lvalue        | Named, addressable object                             |
+| `x`                 | lvalue        | Still an lvalue when accessed later                  |
+| `42`                | rvalue        | Temporary value (you can't take its address)         |
+| `T{}`               | rvalue        | Temporary result of a constructor                    |
+| `std::move(x)`      | rvalue        | *Explicitly* converted to an rvalue for moving       |
+
+#### ⚙️ Type categories
+
+- `T&`: lvalue reference — binds *only* to lvalues
+- `T&&`: rvalue reference — binds *only* to rvalues
+  ⚠️ (except in template deduction — see "*forwarding references*")
+
+---
+
+### 🛠 Why `push_back` Uses an Rvalue Reference Overload
+
+To support efficient insertion, we define two overloads:
+
+```cpp
+void push_back(const_reference value);  // binds lvalues; usually results in a copy
+void push_back(rvalue_reference value); // binds rvalues; usually results in a move
+```
+
+- The first binds to named/lvalue objects (**non-temporaries**) and internally invokes the copy constructor of `T`
+- The second binds to rvalues (**temporaries or moved-from objects**) and internally invokes the move constructor of `T`
+
+This lets you write:
+
+```cpp
+Vector<Foo> v;
+Foo a{42};
+
+v.push_back(a);             // Calls lvalue overload → copy
+v.push_back(std::move(a));  // Calls rvalue overload → move
+v.push_back(Foo{13});       // Calls rvalue overload → move (temporary)
+```
+
+---
+
+### ⚠️ Without the rvalue overload:
+
+If you only define `push_back(const T&)`, then:
+- All pushes are **copies**, even if the source is a temporary.
+- Performance suffers if `T` is expensive to copy.
+
+So we use `push_back(T&&)` to give temporaries (rvalues) their **most efficient path** — a move.
+
+---
+
+### 📌 Type Traits
+
+While type aliases facilitate generic code, they are **not part of the type traits system**. The aliases are:
 
 - Defined within the class
 - Intended to describe container-specific types
@@ -88,7 +145,7 @@ std::is_same<T, U>
 std::enable_if<...>
 ```
 
-C++ type traits, found in the `<type_traits>` header, provide compile-time information about types. They are an essential tool for writing **generic**, **type-safe**, and **optimized** code.
+C++ type traits, found in the `<type_traits>` header, provide compile-time information about types.
 
 #### Common Type Traits
 
@@ -110,56 +167,173 @@ These checks run at **compile time** and will cause a compilation error if the a
 - A type is **not trivially copyable** if it defines its own copy/move constructors, destructor, or manages resources (like `new`/`delete`).
 - In C++14, we use traits within `static_assert`, `enable_if`, and tag dispatching.
 
+### 🧱 Allocation, Construction, and Destruction in C++
 
+Modern C++ gives us low-level control over memory and object lifetimes by separating:
 
-### `::operator new(size)` vs `new T(...)`
+- **Memory allocation** (`operator new`)
+- **Object construction** (`placement new`)
+- **Object destruction** (explicit destructor calls)
+- **Memory deallocation** (`operator delete`)
 
-You’ll use:
-
-```cpp
-value_type* ptr = reinterpret_cast<value_type*>(::operator new(bytes));
-```
-
-This allocates raw memory **without constructing objects**. It's C++'s standards-compliant answer to `malloc()`, and it's safe to use for non-trivially constructible types when managing lifetime manually.
+This is the foundation of how types like `std::vector<T>` manage their internal storage.
 
 ---
 
-### `placement new`
+### `new` / `delete` Expressions vs. Operators
 
-This allows you to construct an object in memory you've already allocated:
+|         | **Expression**          | **Operator**                   |
+|---------|--------------------------|--------------------------------|
+| Allocating | `new T(args...)`         | `::operator new(size)`         |
+| Deallocating | `delete ptr`            | `::operator delete(ptr)`        |
+| Constructs object? | ✅ Yes (calls constructor) | ❌ No (raw memory)               |
+| Calls destructor? | ✅ Yes (when deleting) | ❌ No (manual cleanup required) |
+
+#### 💡 Summary:
+
+- **Expressions**:
+  - `new T(args...)`: allocates + constructs
+  - `delete ptr`: calls destructor + deallocates
+
+- **Operators**:
+  - `::operator new(size)`: just allocates raw memory
+  - `::operator delete(ptr)`: just deallocates raw memory
+
+These operators can also be **customized** or **overloaded** per class.
+
+---
+
+### `::operator new(size)` – Raw allocation
+
+To manually allocate memory for `n` objects of type `T`, use:
+
+```cpp
+std::size_t bytes = n * sizeof(T);
+value_type* ptr = reinterpret_cast<value_type*>(::operator new(bytes));
+```
+
+This is like C's `malloc`, but it guarantees proper alignment and interacts correctly with constructors/destructors. No objects are constructed yet.
+
+---
+
+### **Placement new** – Constructing in pre-allocated memory
+
+To construct an object at a specific address:
 
 ```cpp
 new (ptr + i) T(args...);
 ```
 
-This is called **placement new**, and it's key to implementing STL-style containers and separates *allocation* from *construction*.
+- This syntax is called **placement new**
+- It constructs a new `T` **in-place** in memory you allocated separately
+- You are now responsible for managing that object’s lifetime
+
+🚫 Using the regular `new T(...)` here would **allocate new memory**, which is not what you want.
+
+### 😬 Sidebar: `new[]`, `delete[]`, and the Footguns of C++
+
+C++ has two families of memory management functions:
+
+- `new` / `delete`
+- `new[]` / `delete[]`
+
+These are distinct and **not interchangeable**:
+
+```cpp
+int* a = new int[10];
+delete a;      // ❌ UB! Should be delete[]
+
+int* b = new int;
+delete[] b;    // ❌ Also UB
+```
+
+### 🔥 Why Do We Have `delete[]`?
+
+When you use `new[]`, the compiler may insert *hidden metadata* (like the number of elements) before the start of the block. This allows `delete[]` to call destructors on each element.
+
+> 💭 But... this memory layout is not standardized. Compilers do this differently.
+
+### 🤔 So What’s the Problem?
+
+- `delete[]` must match a `new[]` **exactly**
+- Failing to do so leads to **undefined behavior**
+- There's no way to detect mismatches at runtime (!)
+- In practice, people often confuse them (especially in legacy code)
+
+💬 **Herb Sutter** and others have argued that `delete[]` is a design anomaly:
+> "Wouldn't it be nice if arrays didn't need their own special form of new/delete?"
+
+It's one more reason modern C++ encourages:
+- `std::vector<T>` for dynamic-sized arrays
+- `std::unique_ptr<T[]>` only when absolutely necessary
+- Avoiding manual `new[]` and `delete[]` entirely
 
 ---
 
-### Manual destruction
+### 🧠 Moral of the sidebar
 
-C++ does not implicitly manage lifetime for memory allocated with `::operator new`. You are responsible for calling the destructor explicitly:
+Unless you're writing a lesson like this one or building an allocator:
+> 🚫 Don't use `new[]`/`delete[]`. Use `std::vector<T>` or `std::make_unique<T[]>` instead.
+
+They’re safer, clearer, and less footgun-prone.
+
+---
+
+### **Manual destruction**
+
+Since placement new doesn’t track objects, you must explicitly call the destructor for each element:
 
 ```cpp
-ptr->~T();
+(ptr + i)->~T();
 ```
 
-This is required to avoid memory/resource leaks and to trigger type-specific cleanup when you bypass `new T(...)`.
+This is especially important for types that manage their own resources (`std::string`, `std::vector`, etc.).
 
 ---
 
 ### Why not use `realloc()`?
 
-While `realloc()` is fast and convenient in C, it's **not valid for C++ types that are non-trivially copyable**, such as types with constructors, destructors, or internal pointers (e.g. `std::string`). Using `realloc()` in those cases results in undefined behavior due to object lifetime violations.
+C’s `realloc()` is dangerous in C++ for non-trivial types:
 
-Instead, this lesson teaches how to safely grow capacity:
+- It can move memory **without calling constructors or destructors**
+- This violates C++ object lifetime rules (undefined behavior)
+- It’s only safe for **trivially copyable** types (like `int`, `char`, or PODs)
+
+Instead, our pattern is:
 
 1. Allocate new memory with `::operator new`
-2. Move or copy old elements into the new location
-3. Destroy the old elements
-4. Deallocate the old memory with `::operator delete`
+2. Copy/move-construct into new storage (placement new)
+3. Manually destroy old elements
+4. Deallocate old memory with `::operator delete`
 
-This mimics how `std::vector` works internally.
+This mimics how `std::vector` grows its backing buffer.
+
+---
+
+### 🔍 Sidebar: Virtual Destructors and VTable Entries
+
+When a class has a **virtual destructor**, the compiler may emit **two separate vtable entries** for the destructor:
+
+1. Complete destructor: `Foo::~Foo()`
+2. Deleting destructor: implicitly generated — calls complete destructor and frees memory
+
+This supports situations like:
+
+```cpp
+delete basePtr; // basePtr has dynamic type Foo*
+```
+
+And internally:
+
+- The **deleting destructor** calls the complete destructor, then calls `operator delete(this)`
+- This distinction is needed for correctness in class hierarchies and **placement delete**
+
+In practice, most developers only need to know:
+
+- If your class is polymorphic (i.e., has virtual functions), you should **declare a virtual destructor**
+- This ensures `delete` works safely through a pointer to base
+
+---
 
 ## 🛠️ Additional Core Language Concepts in This Lesson
 
@@ -170,7 +344,9 @@ While implementing `Vector<T>` we introduce a custom `Foo` type to demonstrate d
 This training uses **uniform initialization** with braces:
 
 ```cpp
-Foo a{42}; // ✅ consistent, avoids narrowing conversion
+Foo a{42};    // ✅ consistent, avoids narrowing conversion such as:
+int x = 3.14; // OK (truncates)
+int y{3.14};  // ERROR: narrowing
 ```
 
 We prefer this style because:
@@ -288,6 +464,130 @@ We chose `class` for `Vector<T>` and `Foo` because:
 
 > 💡 An invariant is the internal state a class guarantees will be consistent and valid, as long as clients interact through the public API.
 ---
+
+### 🔄 Copy-Swap Idiom
+
+The **copy-swap idiom** is a robust and exception-safe way to implement the copy assignment operator and, optionally, the move assignment operator.
+
+The key idea is to implement assignment in terms of **copy construction + `swap()`**, leveraging the already-correct copy constructor and making the operation exception-safe.
+
+---
+
+#### 🧱 Structure
+
+```cpp
+class Foo {
+public:
+    Foo(const Foo& other);        // copy constructor
+    void swap(Foo& other) noexcept;  // swap method
+
+    // copy assignment via copy-swap
+    Foo& operator=(Foo other)
+    {
+      swap(other);
+      return *this;
+    }
+};
+```
+
+Yes — the copy assignment operator takes its parameter **by value** (i.e., a local copy). That local instance may be initialized via copy or move constructor, depending on how the function is invoked.
+
+---
+
+### 🔍 Why It Works
+
+1. You copy (or move) from the argument into a local object
+2. You `swap(*this, other);` to replace the current object's contents
+3. The destructor tears down the old contents automatically (in `other`)
+
+This effectively isolates all mutation until after successful construction — making it **exception-safe** by design.
+
+---
+
+### ✅ Benefits
+
+- **Strong exception guarantee**: state is not modified if anything fails
+- **Code reuse**: logic lives in copy constructor and `swap()` only
+- **Often trivial to implement** when `swap()` is already needed
+
+---
+
+### ⚠️ Drawbacks / Considerations
+
+- May involve **extra copy or move**, depending on compiler optimizations
+- May not be appropriate for performance-critical inner loops
+- You need a valid and efficient `swap()` which should be marked noexcept
+
+For maximum performance, the move assignment operator may need a hand-written implementation instead of copy-swap.
+
+---
+
+### 🧪 Example: Implementing `swap`
+
+```cpp
+void Foo::swap(Foo& other) noexcept
+{
+  using std::swap;
+  swap(data_, other.data_);
+}
+```
+
+You can also define a non-member `swap(Foo&, Foo&)` to enable Argument-Dependent Lookup (ADL) and make it compatible with `std::swap`.
+
+#### 🧠 ADL — Argument-Dependent Lookup
+
+When calling a function like `swap(a, b)` without prefixing it with `std::`, the compiler checks:
+
+1. The current scope
+2. The **namespace of the types** of `a` and `b`
+
+This rule is known as **Argument-Dependent Lookup** (ADL). It allows custom `swap()` implementations defined in the same namespace as your type to be automatically found and used.
+
+##### ✅ Best Practice
+
+When writing generic code:
+
+```cpp
+using std::swap;
+swap(a, b);  // ADL-friendly: uses your swap if available, otherwise std::swap
+```
+
+This ensures better performance for classes that define a more efficient `swap()`.
+
+> 💡 Note: In `Vector<T>`, all members are native types, so there's no custom `swap()` to be found via ADL. In this case, `std::swap(...)` behaves the same as `swap(...)` with `using std::swap;`. However, using the ADL-friendly form is a good habit and keeps your code consistent with STL conventions.
+
+---
+
+#### ✅ Mark `swap()` as `noexcept` When Safe
+
+If your type's `swap()` cannot throw, mark it `noexcept`:
+
+```cpp
+void swap(Foo& other) noexcept
+{
+    using std::swap;
+    swap(data_, other.data_);
+}
+```
+
+Reasons to do this:
+
+- STL containers (like `std::vector`) prefer move/swap operations **only if marked `noexcept`**
+- Improves exception-safety guarantees
+- Enables optimizations like move-based reallocation
+
+Thus, combining ADL with `noexcept` creates both **correct** and **efficient** code.
+
+---
+
+### 📚 Additional Reading
+
+- [C++ Core Guidelines: C.127 — Use the copy-and-swap idiom for copy assignment](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rc-swap)
+- Meyers, *Effective C++*, Item 11
+
+```
+Note: In C++11 and later, move assignment is often implemented separately for stronger performance.
+```
 
 ## ✅ Summary
 

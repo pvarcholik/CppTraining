@@ -5,9 +5,10 @@ namespace CppTraining
 template <typename T>
 void swap(Vector<T>& lhs, Vector<T>& rhs) noexcept
 {
-  std::swap(lhs.size_, rhs.size_);
-  std::swap(lhs.capacity_, rhs.capacity_);
-  std::swap(lhs.data_, rhs.data_);
+  using std::swap;
+  swap(lhs.size_, rhs.size_);
+  swap(lhs.capacity_, rhs.capacity_);
+  swap(lhs.data_, rhs.data_);
 }
 
 template <typename T>

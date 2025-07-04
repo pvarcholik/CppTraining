@@ -6,7 +6,7 @@
 namespace CppTraining
 {
 /// @brief Bar is not copyable, but movable.
-class Bar
+class Bar final
 {
 public:
   Bar() = default;
