@@ -62,6 +62,7 @@
     "valarray": "cpp",
     "variant": "cpp",
     "bit": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "cassert": "cpp"
   }
 }

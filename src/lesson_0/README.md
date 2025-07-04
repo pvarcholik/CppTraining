@@ -34,7 +34,7 @@ lesson_0/
 
 ## 🔧 Key Features of `Vector<T>`
 
-- Templates and `type_traits`
+- Templates, standards-compliant type aliases and `type_traits`
 - Capacity-managed storage (uninitialized memory)
 - Explicit object construction using `placement new`
 - Manual object destruction using `~T()`
@@ -49,6 +49,68 @@ lesson_0/
 - `swap()` support
 
 ## 💡 A Few Notable Concepts in This Lesson
+
+### 📌 Notes on Type Aliases
+
+The `Vector<T>` implementation includes a set of common type aliases:
+
+```cpp
+using size_type = std::size_t;
+using value_type = T;
+using reference = value_type&;
+using const_reference = const value_type&;
+using rvalue_reference = value_type&&;
+```
+
+#### Purpose
+
+These aliases replicate conventions used by standard library containers like `std::vector`, and are crucial for:
+
+- **Generic programming**
+  They enable the use of standard algorithms (e.g., `std::equal`, `std::for_each`) and custom templates that expect consistent naming for member types.
+
+- **STL compatibility**
+  Many STL components (like iterators, traits, and algorithms) assume or require these alias names to be present in order to interact seamlessly with custom types.
+
+### 📌 Notes on Type Traits
+
+While those type aliases facilitate generic code, they are **not part of the type traits system**. The aliases are:
+
+- Defined within the class
+- Intended to describe container-specific types
+- Used by templates to deduce properties without inspecting the internals of the container
+
+Contrast this with **type traits**, which are separate utilities that perform **compile-time introspection**, like:
+
+```cpp
+std::is_trivially_copyable<T>
+std::is_same<T, U>
+std::enable_if<...>
+```
+
+C++ type traits, found in the `<type_traits>` header, provide compile-time information about types. They are an essential tool for writing **generic**, **type-safe**, and **optimized** code.
+
+#### Common Type Traits
+
+You’ll most often encounter type traits when writing templates or working with generic algorithms. Some of the most useful traits include:
+
+```cpp
+#include <type_traits>
+
+static_assert(std::is_copy_constructible<Foo>::value, "Foo must be copy-constructible");
+static_assert(std::is_trivially_copyable<Foo>::value, "Foo must be trivially copyable");
+static_assert(std::is_move_assignable<Foo>::value, "Foo must be move assignable");
+static_assert(std::is_default_constructible<Foo>::value, "Foo must be default constructible");
+```
+
+These checks run at **compile time** and will cause a compilation error if the assertion fails.
+
+#### Tips
+- Traits like `is_copy_constructible` or `is_move_assignable` are evaluated based on how the type is defined.
+- A type is **not trivially copyable** if it defines its own copy/move constructors, destructor, or manages resources (like `new`/`delete`).
+- In C++14, we use traits within `static_assert`, `enable_if`, and tag dispatching.
+
+
 
 ### `::operator new(size)` vs `new T(...)`
 

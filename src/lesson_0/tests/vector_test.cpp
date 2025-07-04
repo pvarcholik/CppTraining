@@ -1,9 +1,56 @@
+#include <type_traits>
+
 #include <catch2/catch_all.hpp>
 
+#include "bar.h"
 #include "foo.h"
 #include "vector.h"
 
 using namespace CppTraining;
+
+TEST_CASE("Static interface checks", "[traits]")
+{
+  STATIC_REQUIRE(std::is_default_constructible<Foo>::value);
+  STATIC_REQUIRE(std::is_copy_constructible<Foo>::value);
+  STATIC_REQUIRE(std::is_move_assignable<Vector<Foo>>::value);
+}
+
+// Or
+
+static_assert(std::is_copy_constructible<Foo>::value, "Foo must be copy-constructible");
+static_assert(std::is_move_constructible<Foo>::value, "Foo must be move-constructible");
+static_assert(std::is_default_constructible<Foo>::value, "Foo must be default-constructible");
+static_assert(!std::is_trivially_copyable<Foo>::value, "Foo should not be trivially copyable");
+
+static_assert(std::is_copy_constructible<Vector<Foo>>::value,
+              "Vector<Foo> must be copy-constructible");
+static_assert(std::is_move_constructible<Vector<Foo>>::value,
+              "Vector<Foo> must be move-constructible");
+
+// Or with helper macros
+#define STATIC_REQUIRE_TRAIT(trait, type)                                                          \
+  static_assert(trait<type>::value, #trait " failed for " #type)
+
+#define STATIC_FORBID_TRAIT(trait, type)                                                           \
+  static_assert(!trait<type>::value, #trait " unexpectedly passed for " #type)
+
+// Traits checks for Foo
+STATIC_REQUIRE_TRAIT(std::is_default_constructible, Foo);
+STATIC_REQUIRE_TRAIT(std::is_copy_constructible, Foo);
+STATIC_REQUIRE_TRAIT(std::is_move_assignable, Foo);
+STATIC_FORBID_TRAIT(std::is_trivially_copyable, Foo);
+
+// Traits checks for Vector<Foo>
+STATIC_REQUIRE_TRAIT(std::is_copy_constructible, Vector<Foo>);
+STATIC_REQUIRE_TRAIT(std::is_move_constructible, Vector<Foo>);
+
+// Traits checks for Bar
+STATIC_REQUIRE_TRAIT(std::is_default_constructible, Bar);
+STATIC_FORBID_TRAIT(std::is_copy_constructible, Bar);
+STATIC_REQUIRE_TRAIT(std::is_move_constructible, Bar);
+
+// Vector<T> requires T to be copy-constructible
+// Vector<Bar> vector_bar; // This will generate a static assert failure
 
 SCENARIO("Exercising vector", "[vector]")
 {
