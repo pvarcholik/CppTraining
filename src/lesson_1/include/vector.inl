@@ -3,6 +3,358 @@
 namespace CppTraining
 {
 template <typename T>
+inline Vector<T>::Iterator::Iterator(Vector& owner, size_type index)
+    : container_(&owner), index_(index)
+{
+}
+
+template <typename T>
+typename Vector<T>::Iterator::reference Vector<T>::Iterator::operator*() const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return container_->at(index_);
+}
+
+template <typename T>
+typename Vector<T>::Iterator::pointer Vector<T>::Iterator::operator->() const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return &(container_->at(index_));
+}
+
+template <typename T>
+inline bool Vector<T>::Iterator::operator==(Iterator rhs) const
+{
+  return !(operator!=(rhs));
+}
+
+template <typename T>
+inline bool Vector<T>::Iterator::operator!=(Iterator rhs) const
+{
+  return container_ != rhs.container_ || index_ != rhs.index_;
+}
+
+template <typename T>
+bool Vector<T>::Iterator::operator<(Iterator rhs) const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (rhs.container_ != container_)
+  {
+    throw std::runtime_error("Unrelated iterators.");
+  }
+
+  return index_ < rhs.index_;
+}
+
+template <typename T>
+bool Vector<T>::Iterator::operator>(Iterator rhs) const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (rhs.container_ != container_)
+  {
+    throw std::runtime_error("Unrelated iterators.");
+  }
+
+  return index_ > rhs.index_;
+}
+
+template <typename T>
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator++()
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  ++index_;
+
+  return *this;
+}
+
+template <typename T>
+inline typename Vector<T>::Iterator Vector<T>::Iterator::operator++(int)
+{
+  Iterator temp{*this};
+  operator++();
+  return temp;
+}
+
+template <typename T>
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator--()
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (index_ > 0)
+  {
+    --index_;
+  }
+
+  return *this;
+}
+
+template <typename T>
+inline typename Vector<T>::Iterator Vector<T>::Iterator::operator--(int)
+{
+  Iterator temp = *this;
+  operator--();
+  return temp;
+}
+
+template <typename T>
+typename Vector<T>::Iterator::difference_type Vector<T>::Iterator::operator-(Iterator rhs) const
+{
+  if (container_ != rhs.container_)
+  {
+    throw std::runtime_error("Cannot subtract iterators of different containers.");
+  }
+
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return index_ - rhs.index_;
+}
+
+template <typename T>
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator+=(difference_type offset)
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (offset < 0)
+  {
+    size_type decrement = static_cast<size_type>(-offset);
+    index_ = decrement > index_ ? 0 : index_ - decrement;
+  }
+  else
+  {
+    index_ += static_cast<size_type>(offset);
+  }
+
+  return *this;
+}
+
+template <typename T>
+inline typename Vector<T>::Iterator& Vector<T>::Iterator::operator-=(difference_type offset)
+{
+  return *this += -offset;
+}
+
+template <typename T>
+inline typename Vector<T>::Iterator::reference
+Vector<T>::Iterator::operator[](size_type index) const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return container_->operator[](index);
+}
+
+template <typename T>
+inline Vector<T>::ConstIterator::ConstIterator(const Iterator& other)
+    : container_(other.container_), index_(other.index_)
+{
+}
+
+template <typename T>
+inline Vector<T>::ConstIterator::ConstIterator(const Vector& owner, size_type index)
+    : container_(&owner), index_(index)
+{
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator::reference Vector<T>::ConstIterator::operator*() const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return container_->at(index_);
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator::pointer Vector<T>::ConstIterator::operator->() const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return &(container_->at(index_));
+}
+
+template <typename T>
+inline bool Vector<T>::ConstIterator::operator==(ConstIterator rhs) const
+{
+  return !(operator!=(rhs));
+}
+
+template <typename T>
+inline bool Vector<T>::ConstIterator::operator!=(ConstIterator rhs) const
+{
+  return container_ != rhs.container_ || index_ != rhs.index_;
+}
+
+template <typename T>
+bool Vector<T>::ConstIterator::operator<(ConstIterator rhs) const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (rhs.container_ != container_)
+  {
+    throw std::runtime_error("Unrelated iterators.");
+  }
+
+  return index_ < rhs.index_;
+}
+
+template <typename T>
+bool Vector<T>::ConstIterator::operator>(ConstIterator rhs) const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (rhs.container_ != container_)
+  {
+    throw std::runtime_error("Unrelated iterators.");
+  }
+
+  return index_ > rhs.index_;
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator& Vector<T>::ConstIterator::operator++()
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  ++index_;
+
+  return *this;
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator Vector<T>::ConstIterator::operator++(int)
+{
+  ConstIterator temp{*this};
+  operator++();
+  return temp;
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator& Vector<T>::ConstIterator::operator--()
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (index_ > 0)
+  {
+    --index_;
+  }
+
+  return *this;
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator Vector<T>::ConstIterator::operator--(int)
+{
+  ConstIterator temp = *this;
+  operator--();
+  return temp;
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator::difference_type
+Vector<T>::ConstIterator::operator-(ConstIterator rhs) const
+{
+  if (container_ != rhs.container_)
+  {
+    throw std::runtime_error("Cannot subtract iterators of different containers.");
+  }
+
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return index_ - rhs.index_;
+}
+
+template <typename T>
+typename Vector<T>::ConstIterator& Vector<T>::ConstIterator::operator+=(difference_type offset)
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  if (offset < 0)
+  {
+    size_type decrement = static_cast<size_type>(-offset);
+    index_ = decrement > index_ ? 0 : index_ - decrement;
+  }
+  else
+  {
+    index_ += static_cast<size_type>(offset);
+  }
+
+  return *this;
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator&
+Vector<T>::ConstIterator::operator-=(difference_type offset)
+{
+  return *this += -offset;
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator::reference
+Vector<T>::ConstIterator::operator[](size_type index) const
+{
+  if (container_ == nullptr)
+  {
+    throw std::runtime_error("Unassociated iterator.");
+  }
+
+  return container_->operator[](index);
+}
+
+template <typename T>
 void swap(Vector<T>& lhs, Vector<T>& rhs) noexcept
 {
   using std::swap;
@@ -12,13 +364,14 @@ void swap(Vector<T>& lhs, Vector<T>& rhs) noexcept
 }
 
 template <typename T>
-Vector<T>::Vector(size_type capacity)
+Vector<T>::Vector(size_type capacity, IncrementFunctor increment_functor)
+    : increment_functor_{std::move(increment_functor)}
 {
   reserve(capacity);
 }
 
 template <typename T>
-Vector<T>::Vector(std::initializer_list<value_type> values) : Vector{values.size()}
+Vector<T>::Vector(std::initializer_list<value_type> values) : Vector(values.size())
 {
   for (const auto& value : values)
   {
@@ -56,21 +409,6 @@ Vector<T>& Vector<T>::operator=(const Vector& other)
   swap(*this, copy);
 
   return *this;
-
-  // Without swap
-  // if (this != &other)
-  // {
-  //   clear();
-  //   shrink_to_fit();
-  //   reserve(other.capacity_);
-
-  //   for (const auto& value : other)
-  //   {
-  //     emplace_back(value);
-  //   }
-  // }
-
-  // return *this;
 }
 
 template <typename T>
@@ -127,55 +465,55 @@ typename Vector<T>::const_reference Vector<T>::operator[](size_type index) const
 }
 
 template <typename T>
-typename Vector<T>::size_type Vector<T>::size() const noexcept
+inline typename Vector<T>::size_type Vector<T>::size() const noexcept
 {
   return size_;
 }
 
 template <typename T>
-typename Vector<T>::size_type Vector<T>::capacity() const noexcept
+inline typename Vector<T>::size_type Vector<T>::capacity() const noexcept
 {
   return capacity_;
 }
 
 template <typename T>
-bool Vector<T>::empty() const noexcept
+inline bool Vector<T>::empty() const noexcept
 {
   return size_ == 0_z;
 }
 
 template <typename T>
-typename Vector<T>::reference Vector<T>::front()
+inline typename Vector<T>::reference Vector<T>::front()
 {
   return operator[](0_z);
 }
 
 template <typename T>
-typename Vector<T>::const_reference Vector<T>::front() const
+inline typename Vector<T>::const_reference Vector<T>::front() const
 {
   return operator[](0_z);
 }
 
 template <typename T>
-typename Vector<T>::reference Vector<T>::back()
+inline typename Vector<T>::reference Vector<T>::back()
 {
   return operator[](size_ - 1_z);
 }
 
 template <typename T>
-typename Vector<T>::const_reference Vector<T>::back() const
+inline typename Vector<T>::const_reference Vector<T>::back() const
 {
   return operator[](size_ - 1_z);
 }
 
 template <typename T>
-typename Vector<T>::reference Vector<T>::at(size_type index)
+inline typename Vector<T>::reference Vector<T>::at(size_type index)
 {
   return operator[](index);
 }
 
 template <typename T>
-typename Vector<T>::const_reference Vector<T>::at(size_type index) const
+inline typename Vector<T>::const_reference Vector<T>::at(size_type index) const
 {
   return operator[](index);
 }
@@ -185,13 +523,6 @@ void Vector<T>::reserve(size_type new_capacity)
 {
   if (new_capacity > capacity_)
   {
-    // Think of ::operator new as C++'s version of malloc.
-    // It allocates memory, but does not call constructors
-    // so we need to call constructors manually.
-    // We _could_ try to use realloc here, but it is not guaranteed
-    // to work correctly with non-POD types.
-    // Specifying the global new operator (::operator new) bypasses
-    // any custom new operator overloads that might be defined
     auto new_data{reinterpret_cast<value_type*>(::operator new(new_capacity * sizeof(value_type)))};
 
     for (size_type i = 0_z; i < size_; ++i)
@@ -200,8 +531,6 @@ void Vector<T>::reserve(size_type new_capacity)
       data_[i].~value_type();
     }
 
-    // ::operator delete is the C++ version of free.
-    // It deallocates memory, but does not call destructors.
     ::operator delete(data_);
     data_ = new_data;
     capacity_ = new_capacity;
@@ -291,25 +620,29 @@ void Vector<T>::shrink_to_fit()
 }
 
 template <typename T>
-void Vector<T>::push_back(const_reference value)
+template <typename... Args>
+typename Vector<T>::Iterator Vector<T>::emplace_back(Args&&... args)
 {
   if (size_ == capacity_)
   {
-    reserve(capacity_ == 0_z ? 1_z : capacity_ * 2_z);
+    std::size_t capacity = capacity_ + std::max(1_z, increment_functor_(size_, capacity_));
+    reserve(capacity);
   }
 
-  new (data_ + size_++) value_type(value);
+  new (data_ + size_) value_type(std::forward<Args>(args)...);
+  return {*this, size_++};
 }
 
 template <typename T>
-void Vector<T>::push_back(rvalue_reference value)
+inline typename Vector<T>::Iterator Vector<T>::push_back(const_reference value)
 {
-  if (size_ == capacity_)
-  {
-    reserve(capacity_ == 0_z ? 1_z : capacity_ * 2_z);
-  }
+  return emplace_back(value);
+}
 
-  new (data_ + size_++) value_type(std::move(value));
+template <typename T>
+inline typename Vector<T>::Iterator Vector<T>::push_back(rvalue_reference value)
+{
+  return emplace_back(std::move(value));
 }
 
 template <typename T>
@@ -321,4 +654,39 @@ void Vector<T>::pop_back()
   }
 }
 
+template <typename T>
+inline typename Vector<T>::Iterator Vector<T>::begin() noexcept
+{
+  return Iterator(*this, 0);
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator Vector<T>::begin() const noexcept
+{
+  return ConstIterator(*this, 0);
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator Vector<T>::cbegin() const noexcept
+{
+  return ConstIterator(*this, 0);
+}
+
+template <typename T>
+inline typename Vector<T>::Iterator Vector<T>::end() noexcept
+{
+  return Iterator(*this, size_);
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator Vector<T>::end() const noexcept
+{
+  return ConstIterator(*this, size_);
+}
+
+template <typename T>
+inline typename Vector<T>::ConstIterator Vector<T>::cend() const noexcept
+{
+  return ConstIterator(*this, size_);
+}
 } // namespace CppTraining

@@ -63,6 +63,8 @@
     "variant": "cpp",
     "bit": "cpp",
     "span": "cpp",
-    "cassert": "cpp"
+    "cassert": "cpp",
+    "span_ext": "cpp",
+    "util": "cpp"
   }
 }

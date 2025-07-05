@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <catch2/catch_all.hpp>
 
 #include "foo.h"
@@ -5,7 +7,7 @@
 
 using namespace CppTraining;
 
-SCENARIO("Exercising vector", "[vector]")
+SCENARIO("Exercising Vector<T>", "[vector]")
 {
   GIVEN("An empty vector<Foo>")
   {
@@ -468,6 +470,417 @@ SCENARIO("Exercising vector", "[vector]")
         REQUIRE(values.at(1) == b);
         REQUIRE(values.at(2) == c);
       }
+    }
+  }
+}
+
+template <typename Iterator, typename VectorType>
+void testCommonIteratorOperations(VectorType& values, Iterator begin, Iterator end)
+{
+  const auto a = values.at(0);
+  const auto b = values.at(1);
+  const auto c = values.at(2);
+
+  SECTION("Dereference and arrow operators")
+  {
+    REQUIRE(*begin == a);
+    REQUIRE(begin->getData() == 1);
+  }
+
+  SECTION("Increment / Decrement (prefix and postfix)")
+  {
+    auto it = begin;
+    REQUIRE(*it == a);
+
+    ++it;
+    REQUIRE(*it == b);
+
+    it++;
+    REQUIRE(*it == c);
+
+    --it;
+    REQUIRE(*it == b);
+
+    it--;
+    REQUIRE(*it == a);
+  }
+
+  SECTION("Addition (non-mutating)")
+  {
+    auto it1 = begin + 1;
+    REQUIRE(*it1 == b);
+
+    auto it2 = 1 + begin;
+    REQUIRE(*it2 == b);
+  }
+
+  SECTION("Subtraction (non-mutating)")
+  {
+    auto it1 = end - 1;
+    REQUIRE(*it1 == c);
+  }
+
+  SECTION("Compound assignment += / -=")
+  {
+    auto it = begin;
+    it += 2;
+    REQUIRE(*it == c);
+
+    it -= 1;
+    REQUIRE(*it == b);
+  }
+
+  SECTION("Distance between iterators")
+  {
+    auto mid = begin + 1;
+    REQUIRE(end - begin == 3);
+    REQUIRE(mid - begin == 1);
+    REQUIRE(begin - mid == -1);
+  }
+
+  SECTION("Indexing via []")
+  {
+    REQUIRE(begin[0] == a);
+    REQUIRE(begin[1] == b);
+    REQUIRE(begin[2] == c);
+  }
+
+  SECTION("Comparison operators")
+  {
+    auto mid = begin + 1;
+    REQUIRE(begin == begin);
+    REQUIRE(mid != end);
+    REQUIRE(mid < end);
+    REQUIRE(end > mid);
+    REQUIRE_FALSE(mid > end);
+    REQUIRE_FALSE(end < mid);
+  }
+}
+
+SCENARIO("Exercising Vector<T>::Iterator and Vector<T>::ConstIterator", "[vector_iterator]")
+{
+  using Iterator = Vector<Foo>::Iterator;
+  using ConstIterator = Vector<Foo>::ConstIterator;
+
+  GIVEN("A vector with three elements")
+  {
+    const Foo a{1};
+    const Foo b{2};
+    const Foo c{3};
+
+    Vector<Foo> values{a, b, c};
+
+    GIVEN("A non-const Vector")
+    {
+      testCommonIteratorOperations(values, values.begin(), values.end());
+    }
+
+    GIVEN("A const Vector")
+    {
+      const Vector<Foo>& const_values = values;
+      testCommonIteratorOperations(const_values, const_values.begin(), const_values.end());
+    }
+  }
+
+  GIVEN("A default-constructed iterator")
+  {
+    Iterator it{};
+
+    SECTION("Dereferencing throws")
+    {
+      REQUIRE_THROWS_AS(*it, std::runtime_error);
+    }
+
+    SECTION("Arrow access throws")
+    {
+      REQUIRE_THROWS_AS(it->getData(), std::runtime_error);
+    }
+
+    SECTION("Incrementing (prefix) throws")
+    {
+      REQUIRE_THROWS_AS(++it, std::runtime_error);
+    }
+
+    SECTION("Incrementing (postfix) throws")
+    {
+      REQUIRE_THROWS_AS(it++, std::runtime_error);
+    }
+
+    SECTION("Decrementing (prefix) throws")
+    {
+      REQUIRE_THROWS_AS(--it, std::runtime_error);
+    }
+
+    SECTION("Decrementing (postfix) throws")
+    {
+      REQUIRE_THROWS_AS(it--, std::runtime_error);
+    }
+
+    SECTION("Addition throws")
+    {
+      REQUIRE_THROWS_AS(it + 1, std::runtime_error);
+    }
+
+    SECTION("Subtraction throws")
+    {
+      REQUIRE_THROWS_AS(it - 1, std::runtime_error);
+    }
+
+    SECTION("Compound += throws")
+    {
+      REQUIRE_THROWS_AS(it += 1, std::runtime_error);
+    }
+
+    SECTION("Compound -= throws")
+    {
+      REQUIRE_THROWS_AS(it -= 1, std::runtime_error);
+    }
+
+    SECTION("Indexing throws")
+    {
+      REQUIRE_THROWS_AS(it[0], std::runtime_error);
+    }
+  }
+
+  GIVEN("Iterators from unrelated containers")
+  {
+    Vector<Foo> one;
+    Vector<Foo> two;
+
+    auto it1 = one.begin();
+    auto it2 = two.begin();
+
+    SECTION("Subtracting unrelated iterators throws")
+    {
+      REQUIRE_THROWS_AS(it1 - it2, std::runtime_error);
+    }
+  }
+
+  GIVEN("An invalid iterator and a valid iterator")
+  {
+    Iterator invalid{};
+    Vector<Foo> values{Foo{1}};
+    auto valid = values.begin();
+
+    SECTION("operator< throws when lhs is invalid")
+    {
+      REQUIRE_THROWS_AS(invalid < valid, std::runtime_error);
+    }
+
+    SECTION("operator< throws when rhs is invalid")
+    {
+      REQUIRE_THROWS_AS(valid < invalid, std::runtime_error);
+    }
+
+    SECTION("operator< throws when both are invalid")
+    {
+      REQUIRE_THROWS_AS(invalid < invalid, std::runtime_error);
+    }
+
+    SECTION("operator> throws when lhs is invalid")
+    {
+      REQUIRE_THROWS_AS(invalid > valid, std::runtime_error);
+    }
+
+    SECTION("operator> throws when rhs is invalid")
+    {
+      REQUIRE_THROWS_AS(valid > invalid, std::runtime_error);
+    }
+
+    SECTION("operator> throws when both are invalid")
+    {
+      REQUIRE_THROWS_AS(invalid > invalid, std::runtime_error);
+    }
+
+    SECTION("operator- throws when lhs is invalid")
+    {
+      REQUIRE_THROWS_AS(invalid - valid, std::runtime_error);
+    }
+
+    SECTION("operator- throws when rhs is invalid")
+    {
+      REQUIRE_THROWS_AS(valid - invalid, std::runtime_error);
+    }
+
+    SECTION("operator- throws when both are invalid")
+    {
+      REQUIRE_THROWS_AS(invalid - invalid, std::runtime_error);
+    }
+  }
+
+  GIVEN("A valid iterator at begin()")
+  {
+    const Foo a{1};
+    const Foo b{2};
+    const Foo c{3};
+
+    Vector<Foo> values{a, b, c};
+    auto it = values.end();
+
+    SECTION("Subtracting past begin() clamps at begin()")
+    {
+      auto result = values.end();
+      result -= 4;
+      REQUIRE(result == values.begin()); // clamp to begin()
+    }
+  }
+
+  SECTION("std::sort works with iterators (if T is sortable)")
+  {
+    Vector<int> values{3, 1, 2};
+    std::sort(values.begin(), values.end());
+    REQUIRE(values.at(0) == 1);
+    REQUIRE(values.at(1) == 2);
+    REQUIRE(values.at(2) == 3);
+  }
+
+  GIVEN("A default-constructed ConstIterator")
+  {
+    ConstIterator it{};
+
+    SECTION("Dereferencing throws")
+    {
+      REQUIRE_THROWS_AS(*it, std::runtime_error);
+    }
+
+    SECTION("Arrow access throws")
+    {
+      REQUIRE_THROWS_AS(it->getData(), std::runtime_error);
+    }
+
+    SECTION("Incrementing (prefix) throws")
+    {
+      REQUIRE_THROWS_AS(++it, std::runtime_error);
+    }
+
+    SECTION("Incrementing (postfix) throws")
+    {
+      REQUIRE_THROWS_AS(it++, std::runtime_error);
+    }
+
+    SECTION("Decrementing (prefix) throws")
+    {
+      REQUIRE_THROWS_AS(--it, std::runtime_error);
+    }
+
+    SECTION("Decrementing (postfix) throws")
+    {
+      REQUIRE_THROWS_AS(it--, std::runtime_error);
+    }
+
+    SECTION("Addition throws")
+    {
+      REQUIRE_THROWS_AS(it + 1, std::runtime_error);
+    }
+
+    SECTION("Subtraction throws")
+    {
+      REQUIRE_THROWS_AS(it - 1, std::runtime_error);
+    }
+
+    SECTION("Compound += throws")
+    {
+      REQUIRE_THROWS_AS(it += 1, std::runtime_error);
+    }
+
+    SECTION("Compound -= throws")
+    {
+      REQUIRE_THROWS_AS(it -= 1, std::runtime_error);
+    }
+
+    SECTION("Indexing throws")
+    {
+      REQUIRE_THROWS_AS(it[0], std::runtime_error);
+    }
+  }
+
+  GIVEN("ConstIterators from unrelated containers")
+  {
+    const Vector<Foo> one;
+    const Vector<Foo> two;
+
+    auto it1 = one.begin();
+    auto it2 = two.begin();
+
+    SECTION("Subtracting unrelated ConstIterators throws")
+    {
+      REQUIRE_THROWS_AS(it1 - it2, std::runtime_error);
+    }
+  }
+
+  GIVEN("An invalid ConstIterator and a valid ConstIterator")
+  {
+    ConstIterator invalid{};
+    const Vector<Foo> values{Foo{1}};
+    auto valid = values.begin();
+
+    SECTION("operator< throws when lhs is invalid")
+    {
+      REQUIRE_THROWS_AS(invalid < valid, std::runtime_error);
+    }
+
+    SECTION("operator< throws when rhs is invalid")
+    {
+      REQUIRE_THROWS_AS(valid < invalid, std::runtime_error);
+    }
+
+    SECTION("operator< throws when both are invalid")
+    {
+      REQUIRE_THROWS_AS(invalid < invalid, std::runtime_error);
+    }
+
+    SECTION("operator> throws when lhs is invalid")
+    {
+      REQUIRE_THROWS_AS(invalid > valid, std::runtime_error);
+    }
+
+    SECTION("operator> throws when rhs is invalid")
+    {
+      REQUIRE_THROWS_AS(valid > invalid, std::runtime_error);
+    }
+
+    SECTION("operator> throws when both are invalid")
+    {
+      REQUIRE_THROWS_AS(invalid > invalid, std::runtime_error);
+    }
+
+    SECTION("operator- throws when lhs is invalid")
+    {
+      REQUIRE_THROWS_AS(invalid - valid, std::runtime_error);
+    }
+
+    SECTION("operator- throws when rhs is invalid")
+    {
+      REQUIRE_THROWS_AS(valid - invalid, std::runtime_error);
+    }
+
+    SECTION("operator- throws when both are invalid")
+    {
+      REQUIRE_THROWS_AS(invalid - invalid, std::runtime_error);
+    }
+  }
+
+  GIVEN("A valid ConstIterator at cbegin()")
+  {
+    const Foo a{1};
+    const Foo b{2};
+    const Foo c{3};
+
+    Vector<Foo> values{a, b, c};
+
+    SECTION("Subtracting past cbegin() clamps at cbegin()")
+    {
+      auto result = values.cend();
+      result -= 4;
+      REQUIRE(result == values.cbegin()); // clamp to cbegin()
+    }
+
+    SECTION("ConstIterator can be constructed from Iterator")
+    {
+      Vector<Foo>::Iterator it = values.begin();
+      ConstIterator const_it(it);
+      REQUIRE(const_it == values.cbegin());
+      REQUIRE(*const_it == *it);
     }
   }
 }

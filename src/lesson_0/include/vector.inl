@@ -18,7 +18,7 @@ Vector<T>::Vector(size_type capacity)
 }
 
 template <typename T>
-Vector<T>::Vector(std::initializer_list<value_type> values) : Vector{values.size()}
+Vector<T>::Vector(std::initializer_list<value_type> values) : Vector(values.size())
 {
   for (const auto& value : values)
   {
