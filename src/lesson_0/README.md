@@ -601,3 +601,42 @@ These foundational C++ topics may seem subtle, but they directly affect:
 By the end of Lesson 0, you're building STL-style abstractions from scratch — with full control over semantics, allocation, and safety.
 
 This hands-on experience provides the intuition needed to **apply the STL effectively, safely extend types**, and **write better production code**.
+
+---
+
+### 🚀 Coming Up in Lesson 1: Iterators, STL Compatibility, and Allocators (C++14)
+
+In Lesson 0, you built a working `Vector<T>` using manual memory management and value semantics.
+
+In Lesson 1, we will take a big step forward by enabling compatibility with the **Standard Template Library (STL)** and supporting **custom allocator behavior**.
+
+You’ll:
+
+✅ **Implement bidirectional and random-access iterators**, including:
+
+- `Vector<T>::Iterator` and `ConstIterator`
+- Support for `begin()`, `end()`, `cbegin()`, `cend()`
+- Iterator operations: `*it`, `it->`, `++it`, `--it`, `it + n`, `it - n`, `it[i]`, and distance calculations
+
+✅ **Write exception-safe and STL-compliant memory management**, including:
+
+- Use of `std::allocator_traits`
+- Support for custom allocators via a second template parameter
+- Proper delegation of `allocate`, `deallocate`, `construct`, and `destroy`
+
+✅ **Add allocator propagation support**, including:
+
+- Traits like `propagate_on_container_copy_assignment`
+- Correct behavior for move assignment and swap based on allocator compatibility
+
+✅ **Enable use of STL algorithms**, such as:
+
+```cpp
+for (auto& elem : myVector) { ... }
+std::sort(myVector.begin(), myVector.end());
+std::copy_if(myVector.begin(), myVector.end(), ...);
+```
+
+This lesson sets the foundation for building STL-compatible data structures while giving you an inside look at how real containers support allocation strategies and iterator semantics.
+
+---
