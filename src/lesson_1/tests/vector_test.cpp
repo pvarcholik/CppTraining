@@ -3,6 +3,8 @@
 #include <catch2/catch_all.hpp>
 
 #include "foo.h"
+#include "propogating_allocator.h"
+#include "throwing_copy.h"
 #include "vector.h"
 
 using namespace CppTraining;
@@ -279,6 +281,41 @@ SCENARIO("Exercising Vector<T>", "[vector]")
       }
     }
 
+    WHEN("The copy constructor triggers an exception")
+    {
+      ThrowingCopy::reset(3_z);
+      Vector<ThrowingCopy> vector;
+      vector.emplace_back(1);
+      vector.emplace_back(2);
+      vector.emplace_back(3);
+
+      THEN("It throws an exception as expected")
+      {
+        REQUIRE_THROWS_AS(Vector<ThrowingCopy>{vector}, std::runtime_error);
+      }
+    }
+
+    WHEN("We assign the vector to another with existing elements")
+    {
+      values.push_back(a);
+      values.push_back(b);
+      values.push_back(c);
+
+      Vector<Foo> other;
+      other.push_back(d);
+
+      other = values;
+
+      THEN("The other vector has the same size and elements")
+      {
+        REQUIRE(other.size() == 3_z);
+        REQUIRE(other.capacity() >= 3_z);
+        REQUIRE(other.at(0) == a);
+        REQUIRE(other.at(1) == b);
+        REQUIRE(other.at(2) == c);
+      }
+    }
+
     WHEN("We assign the vector to another")
     {
       values.push_back(a);
@@ -336,6 +373,28 @@ SCENARIO("Exercising Vector<T>", "[vector]")
         REQUIRE(values.at(0) == a);
         REQUIRE(values.at(1) == b);
         REQUIRE(values.at(2) == c);
+      }
+    }
+
+    WHEN("We assignment triggers allocator replacement")
+    {
+      Vector<Foo, PropagatingAllocator<Foo>> vector1{0_z, PropagatingAllocator<Foo>{1}};
+      Vector<Foo, PropagatingAllocator<Foo>> vector2{0_z, PropagatingAllocator<Foo>{2}};
+
+      vector1.emplace_back(a);
+      vector1.emplace_back(b);
+      vector1.emplace_back(c);
+
+      vector2.emplace_back(d);
+
+      vector2 = vector1;
+
+      THEN("The vectors have the same sizes and elements")
+      {
+        REQUIRE(vector2.size() == 3_z);
+        REQUIRE(vector2.at(0) == a);
+        REQUIRE(vector2.at(1) == b);
+        REQUIRE(vector2.at(2) == c);
       }
     }
 
@@ -397,6 +456,44 @@ SCENARIO("Exercising Vector<T>", "[vector]")
       }
     }
 
+    WHEN("We move assign vectors with non-propagating allocator and allocator IDs differ")
+    {
+      Vector<Foo, PropagatingAllocator<Foo>> lhs{0_z, PropagatingAllocator<Foo>{1}};
+      Vector<Foo, PropagatingAllocator<Foo>> rhs{0_z, PropagatingAllocator<Foo>{2}};
+
+      rhs.emplace_back(a);
+      rhs.emplace_back(b);
+
+      lhs = std::move(rhs);
+
+      THEN("lhs gets a deep copy of rhs' elements")
+      {
+        REQUIRE(lhs.size() == 2_z);
+        REQUIRE(lhs.capacity() >= 2_z);
+        REQUIRE(lhs.at(0) == a);
+        REQUIRE(lhs.at(1) == b);
+      }
+    }
+
+    WHEN("We move assign vectors with non-propagating allocator and allocator IDs are equal")
+    {
+      PropagatingAllocator<Foo> allocator{42};
+      Vector<Foo, PropagatingAllocator<Foo>> lhs{0_z, allocator};
+      Vector<Foo, PropagatingAllocator<Foo>> rhs{0_z, allocator};
+
+      rhs.emplace_back(a);
+      rhs.emplace_back(b);
+
+      lhs = std::move(rhs);
+
+      THEN("lhs steals storage from rhs and rhs is empty")
+      {
+        REQUIRE(lhs.size() == 2_z);
+        REQUIRE(lhs.at(0) == a);
+        REQUIRE(lhs.at(1) == b);
+      }
+    }
+
     WHEN("We swap two vectors")
     {
       Vector<Foo> other;
@@ -412,6 +509,23 @@ SCENARIO("Exercising Vector<T>", "[vector]")
         REQUIRE(values.at(1) == b);
         REQUIRE(other.size() == 0_z);
         REQUIRE(other.empty());
+      }
+    }
+
+    WHEN("We swap two vectors with a propogating allocator")
+    {
+      Vector<Foo, PropagatingAllocator<Foo>> vector1{a, b, c};
+      Vector<Foo, PropagatingAllocator<Foo>> vector2;
+
+      swap(vector1, vector2);
+
+      THEN("The vectors have swapped sizes and elements")
+      {
+        REQUIRE(vector1.size() == 0_z);
+        REQUIRE(vector2.size() == 3_z);
+        REQUIRE(vector2.at(0) == a);
+        REQUIRE(vector2.at(1) == b);
+        REQUIRE(vector2.at(2) == c);
       }
     }
 

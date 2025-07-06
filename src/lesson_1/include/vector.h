@@ -5,21 +5,22 @@
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
+#include <memory>
 #include <stdexcept>
 #include <type_traits>
 
-#include "default_increment.h"
+#include "default_growth_policy.h"
 #include "literal_operators.h"
 
 namespace CppTraining
 {
-template <typename T>
+template <typename T, typename Allocator = std::allocator<T>>
 class Vector;
 
-template <typename T>
-void swap(Vector<T>& lhs, Vector<T>& rhs) noexcept;
+template <typename T, typename Allocator>
+void swap(Vector<T, Allocator>& lhs, Vector<T, Allocator>& rhs) noexcept;
 
-template <typename T>
+template <typename T, typename Allocator>
 class Vector final
 {
 public:
@@ -29,7 +30,10 @@ public:
   using const_reference = const value_type&;
   using rvalue_reference = value_type&&;
 
-  using IncrementFunctor = std::function<std::size_t(std::size_t, std::size_t)>;
+  using allocator_type = Allocator;
+  using allocator_traits = std::allocator_traits<Allocator>;
+
+  using growth_policy_type = std::function<std::size_t(std::size_t, std::size_t)>;
 
   class Iterator final
   {
@@ -72,7 +76,7 @@ public:
     {
       if (position.container_ == nullptr)
       {
-        throw std::runtime_error("Uninitialized iterator.");
+        throw std::runtime_error("Unassociated iterator.");
       }
 
       auto result = position;
@@ -89,7 +93,7 @@ public:
     {
       if (position.container_ == nullptr)
       {
-        throw std::runtime_error("Uninitialized iterator.");
+        throw std::runtime_error("Unassociated iterator.");
       }
 
       auto result = position;
@@ -146,7 +150,7 @@ public:
     {
       if (position.container_ == nullptr)
       {
-        throw std::runtime_error("Uninitialized iterator.");
+        throw std::runtime_error("Unassociated iterator.");
       }
 
       auto result = position;
@@ -163,7 +167,7 @@ public:
     {
       if (position.container_ == nullptr)
       {
-        throw std::runtime_error("Uninitialized iterator.");
+        throw std::runtime_error("Unassociated iterator.");
       }
 
       auto result = position;
@@ -181,8 +185,12 @@ public:
   static_assert(std::is_copy_constructible<T>::value,
                 "Vector<T> requires copy-constructible value type");
 
-  explicit Vector(size_type capacity = 0_z, IncrementFunctor increment = DefaultIncrement{});
-  Vector(std::initializer_list<value_type> values);
+  explicit Vector(size_type capacity = 0_z,
+                  const allocator_type& allocator = allocator_type{},
+                  growth_policy_type growth_policy = DefaultGrowthPolicy{});
+  Vector(std::initializer_list<value_type> values,
+         const allocator_type& alloc = allocator_type(),
+         growth_policy_type growth_policy = DefaultGrowthPolicy{});
   Vector(const Vector& other);
   Vector(Vector&& other) noexcept;
   Vector& operator=(const Vector& other);
@@ -228,9 +236,9 @@ private:
   size_type size_{0_z};
   size_type capacity_{0_z};
   value_type* data_{nullptr};
-  IncrementFunctor increment_functor_;
+  allocator_type allocator_{};
+  growth_policy_type growth_policy_;
 };
-
 } // namespace CppTraining
 
 #include "vector.inl"
