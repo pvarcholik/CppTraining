@@ -1,7 +1,5 @@
 set(TARGET_NAME cpp_training_common)
 
-find_package(Microsoft.GSL CONFIG REQUIRED)
-
 if(MSVC)
   set(PLATFORM_OPTION WIN32)
 endif()
