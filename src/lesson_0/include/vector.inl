@@ -76,21 +76,26 @@ Vector<T>& Vector<T>::operator=(const Vector& other)
 template <typename T>
 Vector<T>& Vector<T>::operator=(Vector&& other) noexcept
 {
-  if (this != &other)
-  {
-    clear();
-    shrink_to_fit();
-
-    size_ = other.size_;
-    capacity_ = other.capacity_;
-    data_ = other.data_;
-
-    other.size_ = 0_z;
-    other.capacity_ = 0_z;
-    other.data_ = nullptr;
-  }
+  swap(*this, other);
 
   return *this;
+
+  // Without swap
+  // if (this != &other)
+  // {
+  //   clear();
+  //   shrink_to_fit();
+
+  //   size_ = other.size_;
+  //   capacity_ = other.capacity_;
+  //   data_ = other.data_;
+
+  //   other.size_ = 0_z;
+  //   other.capacity_ = 0_z;
+  //   other.data_ = nullptr;
+  // }
+
+  // return *this;
 }
 
 template <typename T>

@@ -436,9 +436,6 @@ SCENARIO("Exercising vector", "[vector]")
       {
         REQUIRE(other.size() == 3_z);
         REQUIRE(other.capacity() >= 3_z);
-        REQUIRE(values.empty());
-        REQUIRE(values.size() == 0_z);
-        REQUIRE(values.capacity() >= 0_z);
       }
     }
 
