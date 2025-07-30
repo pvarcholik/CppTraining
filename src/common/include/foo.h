@@ -5,7 +5,7 @@
 
 namespace CppTraining
 {
-class Foo
+class Foo final
 {
 public:
   explicit Foo(std::int32_t data = 0);
@@ -13,7 +13,7 @@ public:
   Foo(Foo&& rhs) noexcept;
   Foo& operator=(const Foo& rhs);
   Foo& operator=(Foo&& rhs) noexcept;
-  virtual ~Foo();
+  ~Foo();
 
   bool operator==(const Foo& rhs) const;
   bool operator!=(const Foo& rhs) const;
