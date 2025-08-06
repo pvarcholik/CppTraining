@@ -33,7 +33,7 @@ For now, though, this design makes allocator propagation observable and testable
 
 Unlike `Allocator`, the growth policy isn't part of the template signature — it's passed via constructor. This is deliberate. It lets you change growth behavior at runtime without creating new types. I think this is a great opportunity to contrast with how other STL types use type parameters to define behavior (e.g., `std::unordered_map<Key, T, Hash, KeyEqual>`).
 
-It’s worth exploring the tradeoff: type parameters give you more compiler-time guarantees and possible optimizations, but they increase type complexity and reduce flexibility. Runtime composition (e.g., via `std::function` or lambdas) offers flexibility, at the cost of some runtime indirection and potential type erasure.
+It’s worth exploring the tradeoff: type parameters give you more compile-time guarantees and possible optimizations, but they increase type complexity and reduce flexibility. Runtime composition (e.g., via `std::function` or lambdas) offers flexibility, at the cost of some runtime indirection and potential type erasure.
 
 If time allows, I’ll connect this idea back to `std::function`, lambdas, and the idea of policy-based design.
 

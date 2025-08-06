@@ -17,9 +17,6 @@
       "options": {
         "cwd": "${workspaceFolder}/build"
       },
-      "problemMatcher": [
-        "$gcc"
-      ],
       "group": {
         "kind": "build",
         "isDefault": false
@@ -33,7 +30,6 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": [],
       "group": {
         "kind": "build",
         "isDefault": false

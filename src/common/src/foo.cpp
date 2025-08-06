@@ -4,11 +4,11 @@
 
 namespace CppTraining
 {
-Foo::Foo(std::int32_t data) : data_(new std::int32_t(data)) {}
+Foo::Foo(std::int32_t data) : data_{new std::int32_t(data)} {}
 
-Foo::Foo(const Foo& rhs) : data_(new std::int32_t(*rhs.data_)) {}
+Foo::Foo(const Foo& rhs) : data_{new std::int32_t(*rhs.data_)} {}
 
-Foo::Foo(Foo&& rhs) noexcept : data_(rhs.data_)
+Foo::Foo(Foo&& rhs) noexcept : data_{rhs.data_}
 {
   rhs.data_ = nullptr;
 }
